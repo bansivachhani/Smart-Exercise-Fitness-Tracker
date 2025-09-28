@@ -1,13 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { doc, setDoc } from "firebase/firestore";
-import { db } from "../firebase"; 
-import { useAuth } from "../context/AuthContext"
 
 export default function DietPlanPage() {
   const navigate = useNavigate();
-  const { user,saveDietPlan } = useAuth(); // ✅ get logged in user from context
-
   const [formData, setFormData] = useState({
     age: "",
     gender: "",
@@ -39,35 +34,11 @@ export default function DietPlanPage() {
     }
   };
 
-  // const handleSubmit = async (e) => {
-  //   e.preventDefault();
-
-  //   if (!user) {
-  //     alert("You must be logged in. Redirecting to login page...");
-  //     navigate("/login");
-  //     return;
-  //   }
-
-  //   try {
-  //     // write to Firestore under the authenticated user's uid
-  //     await setDoc(doc(db, "profiles", user.uid), formData, { merge: true });
-  //     navigate("/diet-result", { state: formData });
-  //   } catch (err) {
-  //     console.error("Error saving profile:", err);
-  //     // show user-friendly message + developer error string
-  //     alert("Something went wrong saving your profile:\n" + (err.message || err));
-  //   }
-  // };
-
-  const handleSubmit = async (e) => {
-  e.preventDefault();
-  try {
-    await saveDietPlan(formData); // saves to Firestore + context
+  const handleSubmit = (e) => {
+    e.preventDefault();
     navigate("/diet-result", { state: formData });
-  } catch (err) {
-    alert("Error saving diet: " + err.message);
-  }
-};
+  };
+
   return (
     <section className="px-6 py-16 max-w-4xl mx-auto mt-8">
       <h1 className="text-4xl font-bold mb-10 text-center bg-gradient-to-r from-orange-500 via-pink-500 to-purple-500 bg-clip-text text-transparent">
@@ -190,7 +161,7 @@ export default function DietPlanPage() {
           </select>
         </div>
 
-        {/* Veg Type if vegetarian */}
+        {/* Vegetarian Type (conditional) */}
         {formData.diet_type === "vegetarian" && (
           <div>
             <label className="block text-gray-300 mb-2">Vegetarian Type</label>
@@ -203,14 +174,12 @@ export default function DietPlanPage() {
               <option value="">Select Veg Type</option>
               <option value="lacto_vegetarian">Lacto Vegetarian</option>
               <option value="ovo_vegetarian">Ovo Vegetarian</option>
-              <option value="lacto_ovo_vegetarian">
-                Lacto-Ovo Vegetarian
-              </option>
+              <option value="lacto_ovo_vegetarian">Lacto-Ovo Vegetarian</option>
             </select>
           </div>
         )}
 
-        {/* Cuisine */}
+        {/* Cuisine Preference */}
         <div>
           <label className="block text-gray-300 mb-2">Preferred Cuisine</label>
           <select
@@ -228,7 +197,7 @@ export default function DietPlanPage() {
           </select>
         </div>
 
-        {/* Taste */}
+        {/* Taste Preference */}
         <div>
           <label className="block text-gray-300 mb-2">Taste Preference</label>
           <select
@@ -247,11 +216,9 @@ export default function DietPlanPage() {
           </select>
         </div>
 
-        {/* Mood Food */}
+        {/* Mood-based Food */}
         <div>
-          <label className="block text-gray-300 mb-2">
-            Mood-Based Food Preference
-          </label>
+          <label className="block text-gray-300 mb-2">Mood-Based Food Preference</label>
           <select
             name="mood_food"
             value={formData.mood_food}
@@ -259,10 +226,10 @@ export default function DietPlanPage() {
             className="w-full px-4 py-2 rounded-lg bg-gray-800 text-white focus:ring-2 focus:ring-purple-500"
           >
             <option value="">Select Mood Food Type</option>
-            <option value="calming">Calming (reduce anger/stress)</option>
-            <option value="energizing">Energizing (boost energy & focus)</option>
-            <option value="digestive">Digestive (improve digestion)</option>
-            <option value="immunity">Immunity (overall wellness)</option>
+            <option value="calming">Foods to keep calm & reduce anger</option>
+            <option value="energizing">Foods to boost energy & focus</option>
+            <option value="digestive">Foods for better digestion</option>
+            <option value="immunity">Foods for immunity & overall wellness</option>
           </select>
         </div>
 
@@ -288,20 +255,18 @@ export default function DietPlanPage() {
         <div>
           <label className="block text-gray-300 mb-3">Health Conditions</label>
           <div className="grid grid-cols-2 gap-3 text-gray-300">
-            {["Diabetes", "High BP", "Thyroid", "Cholesterol", "PCOS", "None"].map(
-              (cond) => (
-                <label key={cond} className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    value={cond}
-                    checked={formData.health_conditions.includes(cond)}
-                    onChange={handleChange}
-                    className="accent-pink-500"
-                  />
-                  {cond}
-                </label>
-              )
-            )}
+            {["Diabetes", "High BP", "Thyroid", "Cholesterol", "PCOS", "None"].map((cond) => (
+              <label key={cond} className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  value={cond}
+                  checked={formData.health_conditions.includes(cond)}
+                  onChange={handleChange}
+                  className="accent-pink-500"
+                />
+                {cond}
+              </label>
+            ))}
           </div>
         </div>
 

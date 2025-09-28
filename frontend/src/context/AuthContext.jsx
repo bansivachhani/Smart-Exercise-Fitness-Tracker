@@ -32,26 +32,25 @@ export const AuthProvider = ({ children }) => {
   // });
 
   const formatUser = (data) => ({
-  id: data.uid || data.id || data.user_id,
-  email: data.email,
-  name: data.profile?.name || "User",
-  age: data.profile?.age || null,
-  height: data.profile?.height || null,
-  weight: data.profile?.weight || null,
-  goal: data.profile?.goal || "Maintain Weight",
-  diet: data.profile?.diet || "",
-  activity: data.profile?.activity || [],
-  goals: data.profile?.goals || "fitness",
-  schedule: data.profile?.schedule || [],
-  progress: data.profile?.progress || 0,
-  completedYoga: data.profile?.completedYoga || [],
-  completedMeditation: data.profile?.completedMeditation || [],
-  suggested_yoga: data.profile?.suggested_yoga || [],
-  suggested_meditation: data.profile?.suggested_meditation || [],
-  suggested_activities: data.profile?.suggested_activities || [],
-  stress_level: data.profile?.stress_level || "medium",
-});
-
+    id: data.uid || data.id || data.user_id,
+    email: data.email,
+    name: data.profile?.name || "User",
+    age: data.profile?.age || null,
+    height: data.profile?.height || null,
+    weight: data.profile?.weight || null,
+    goal: data.profile?.goal || "Maintain Weight",
+    diet: data.profile?.diet || "",
+    activity: data.profile?.activity || [],
+    goals: data.profile?.goals || "fitness",
+    schedule: data.profile?.schedule || [],
+    progress: data.profile?.progress || 0,
+    completedYoga: data.profile?.completedYoga || [],
+    completedMeditation: data.profile?.completedMeditation || [],
+    suggested_yoga: data.profile?.suggested_yoga || [],
+    suggested_meditation: data.profile?.suggested_meditation || [],
+    suggested_activities: data.profile?.suggested_activities || [],
+    stress_level: data.profile?.stress_level || "medium",
+  });
 
   // --- Save user locally ---
   const saveUser = (data) => {
@@ -122,38 +121,37 @@ export const AuthProvider = ({ children }) => {
 
   // --- Update backend profile (FastAPI + Firestore) ---
   const updateProfile = async (updates) => {
-  if (!user || !user.id) throw new Error("No user logged in");
+    if (!user || !user.id) throw new Error("No user logged in");
 
-  try {
-    const res = await fetch(`http://127.0.0.1:8000/profile/${user.id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(updates),
-    });
+    try {
+      const res = await fetch(`http://127.0.0.1:8000/profile/${user.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updates),
+      });
 
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.detail || "Failed to update profile");
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.detail || "Failed to update profile");
+      }
+
+      const data = await res.json();
+
+      // Overwrite user completely with API response + previous id/email
+      const updatedUser = {
+        ...user,
+        ...data.data, // contains suggested_yoga, suggested_meditation, updated fields
+      };
+
+      setUser(updatedUser);
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+
+      return updatedUser;
+    } catch (err) {
+      console.error("Profile update error:", err);
+      throw err;
     }
-
-    const data = await res.json();
-
-    // Overwrite user completely with API response + previous id/email
-    const updatedUser = {
-      ...user,
-      ...data.data, // contains suggested_yoga, suggested_meditation, updated fields
-    };
-
-    setUser(updatedUser);
-    localStorage.setItem("user", JSON.stringify(updatedUser));
-
-    return updatedUser;
-  } catch (err) {
-    console.error("Profile update error:", err);
-    throw err;
-  }
-};
-
+  };
 
   // --- Diet Plan helpers ---
   const saveDietPlan = async (dietData) => {
@@ -177,6 +175,21 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // --- AuthContext.js ---
+
+  // Fetch the full user profile from Firestore
+  const getUserProfile = async (uid) => {
+    if (!uid) return null;
+    try {
+      const docRef = doc(db, "users", uid);
+      const docSnap = await getDoc(docRef);
+      return docSnap.exists() ? docSnap.data() : null;
+    } catch (err) {
+      console.error("Error fetching user profile:", err);
+      return null;
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -188,6 +201,7 @@ export const AuthProvider = ({ children }) => {
         updateProfile,
         saveDietPlan,
         getDietPlan,
+        getUserProfile,
       }}
     >
       {children}
